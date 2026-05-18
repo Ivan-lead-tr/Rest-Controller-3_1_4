@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Users</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+<table style="width:70%">
+    <thead>
+    <tr>
+        <th>id</th>
+        <th>Имя</th>
+        <th>Фамилия</th>
+        <th>Почта</th>
+        <th>Возраст</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="user : ${users}">
+        <td th:text="${user.id}"></td>
+        <td th:text="${user.firstName}"></td>
+        <td th:text="${user.lastName}"></td>
+        <td th:text="${user.email}"></td>
+        <td th:text="${user.age}"></td>
+        <td>
+            <form th:action="@{/admin/delete}" method="post" style="display:inline;">
+                <input type="hidden" name="id" th:value="${user.id}"/>
+                <button type="submit">Удалить</button>
+            </form>
+            <form th:action="@{/admin/update}" method="post" style="display:inline">
+                <input type="hidden" name="id" th:value="${user.id}"/>
+                <input type="password" name="password" placeholder="Password" required/>
+                <input type="text" name="firstname" th:value="${user.firstName}"/>
+                <input type="text" name="lastname" th:value="${user.lastName}"/>
+                <input type="email" name="email" th:value="${user.email}"/>
+                <input type="number" name="age" th:value="${user.age}"/>
+                <button type="submit">Редактировать</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<h3>Добавить пользователя</h3>
+<form th:action="@{/admin/add}" method="post">
+    <input type="password" name="password" placeholder="Пароль" required/>
+    <input type="text" name="firstname" placeholder="Имя" required/>
+    <input type="text" name="lastname" placeholder="Фамилия" required/>
+    <input type="email" name="email" placeholder="Почта" required/>
+    <input type="number" name="age" placeholder="Возраст" required/>
+    <button type="submit">Добавить</button>
+</form>
+
+<form th:action="@{/logout}" method="post">
+    <button type="submit">Выйти</button>
+</form>
+</body>
+</html>
