@@ -7,7 +7,10 @@
     <style>
         table, th, td {
             border: 1px solid black;
+            padding: 6px;
         }
+        .form-inline { display: inline; }
+        fieldset { display: inline-block; border: none; padding: 0; margin: 0; }
     </style>
 </head>
 <body>
@@ -19,6 +22,8 @@
         <th>Фамилия</th>
         <th>Почта</th>
         <th>Возраст</th>
+        <th>Роли</th>
+        <th>Действия</th>
     </tr>
     </thead>
     <tbody>
@@ -29,17 +34,21 @@
         <td th:text="${user.email}"></td>
         <td th:text="${user.age}"></td>
         <td>
-            <form th:action="@{/admin/delete}" method="post" style="display:inline;">
+            <form th:action="@{/admin/delete}" method="post" class="form-inline">
                 <input type="hidden" name="id" th:value="${user.id}"/>
                 <button type="submit">Удалить</button>
             </form>
-            <form th:action="@{/admin/update}" method="post" style="display:inline">
+            <form th:action="@{/admin/update}" method="post" class="form-inline">
                 <input type="hidden" name="id" th:value="${user.id}"/>
-                <input type="password" name="password" placeholder="Password" required/>
-                <input type="text" name="firstname" th:value="${user.firstName}"/>
-                <input type="text" name="lastname" th:value="${user.lastName}"/>
-                <input type="email" name="email" th:value="${user.email}"/>
-                <input type="number" name="age" th:value="${user.age}"/>
+                <input type="password" name="password" placeholder="Новый пароль (не обязательно)"/>
+                <input type="text" name="firstName" th:value="${user.firstName}" placeholder="Имя" required/>
+                <input type="text" name="lastName" th:value="${user.lastName}" placeholder="Фамилия" required/>
+                <input type="email" name="email" th:value="${user.email}" placeholder="Почта" required/>
+                <input type="number" name="age" th:value="${user.age}" placeholder="Возраст" required/>
+                <fieldset>
+                    <label><input type="checkbox" name="roleIds" value="1"/> ADMIN</label>
+                    <label><input type="checkbox" name="roleIds" value="2"/> USER</label>
+                </fieldset>
                 <button type="submit">Редактировать</button>
             </form>
         </td>
@@ -49,10 +58,14 @@
 <h3>Добавить пользователя</h3>
 <form th:action="@{/admin/add}" method="post">
     <input type="password" name="password" placeholder="Пароль" required/>
-    <input type="text" name="firstname" placeholder="Имя" required/>
-    <input type="text" name="lastname" placeholder="Фамилия" required/>
+    <input type="text" name="firstName" placeholder="Имя" required/>
+    <input type="text" name="lastName" placeholder="Фамилия" required/>
     <input type="email" name="email" placeholder="Почта" required/>
     <input type="number" name="age" placeholder="Возраст" required/>
+    <fieldset>
+        <label><input type="checkbox" name="roleIds" value="1"/> ADMIN</label>
+        <label><input type="checkbox" name="roleIds" value="2"/> USER</label>
+    </fieldset>
     <button type="submit">Добавить</button>
 </form>
 

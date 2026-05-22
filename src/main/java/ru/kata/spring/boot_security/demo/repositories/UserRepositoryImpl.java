@@ -1,8 +1,10 @@
 package ru.kata.spring.boot_security.demo.repositories;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
+import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 
 
@@ -43,10 +45,24 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public User userByEmail(String email) {
-        return entityManager.createQuery(
-                        "select u from User u where u.email = :email",
-                        User.class)
-                .setParameter("email", email)
-                .getSingleResult();
+        try {
+            return entityManager.createQuery(
+                            "select u from User u join fetch u.roles where u.email = :email",
+                            User.class)
+                    .setParameter("email", email)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Role findById(Long id) {
+        return entityManager.find(Role.class, id);
+    }
+
+    @Override
+    public User findUserById(Long id) {
+        return entityManager.find(User.class, id);
     }
 }

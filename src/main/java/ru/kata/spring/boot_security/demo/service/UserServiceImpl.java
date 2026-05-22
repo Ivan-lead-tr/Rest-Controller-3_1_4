@@ -7,11 +7,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
 
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
@@ -27,10 +30,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Transactional
     @Override
-    public void saveUser (String firstName, String lastName,
-                          String email, Byte age, String password) {
-        User user = new User(firstName, lastName, email, age);
-        user.setPassword(passwordEncoder.encode(password));
+    public void saveUser (User user, List<Long> roleIds) {
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        if (roleIds != null && !roleIds.isEmpty()) {
+            Set<Role> roles = new HashSet<>();
+
+            for (Long roleId : roleIds) {
+                Role role = userRepository.findById(roleId);
+                if (role != null) {
+                    roles.add(role);
+                }
+            }
+            user.setRoles(roles); // Перезаписываем на новый набор ролей
+        }
         userRepository.saveUser(user);
 
     }
@@ -44,16 +58,31 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Transactional
     @Override
-    public void updateUser(Long id,String firstName, String lastName,
-                           String email, Byte age, String password) {
-        User user = new User();
-        user.setId(id);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setEmail(email);
-        user.setAge(age);
-        user.setPassword(passwordEncoder.encode(password));
-        userRepository.updateUser(user);
+    public void updateUser(User user, List<Long> roleIds) {
+
+        User udUser = userRepository.findUserById(user.getId());
+
+        udUser.setFirstName(user.getFirstName());
+        udUser.setLastName(user.getLastName());
+        udUser.setEmail(user.getEmail());
+        udUser.setAge(user.getAge());
+
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
+            udUser.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        if (roleIds != null && !roleIds.isEmpty()) {
+            Set<Role> roles = new HashSet<>();
+
+            for (Long roleId : roleIds) {
+                Role role = userRepository.findById(roleId);
+                if (role != null) {
+                    roles.add(role);
+                }
+            }
+            udUser.setRoles(roles); // Перезаписываем на новый набор ролей
+        }
+
+        userRepository.updateUser(udUser);
     }
 
     @Transactional
@@ -67,6 +96,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public User userByEmail(String email) {
        return userRepository.userByEmail(email);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Role findById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    @Override
+    public User findUserById(Long id) {
+        return userRepository.findUserById(id);
     }
 
     @Transactional(readOnly = true)

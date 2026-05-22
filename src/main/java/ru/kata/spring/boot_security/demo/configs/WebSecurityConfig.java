@@ -43,7 +43,6 @@ public class WebSecurityConfig  {
 
         return http.build();
     }
-
     // аутентификация
     @Bean
     public AuthenticationManager authenticationManager(PasswordEncoder passwordEncoder) {
@@ -53,5 +52,4 @@ public class WebSecurityConfig  {
         authenticationProvider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(authenticationProvider);
     }
-
 }

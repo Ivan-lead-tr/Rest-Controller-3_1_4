@@ -5,10 +5,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.UserService;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin")
@@ -33,12 +37,9 @@ public class AdminController {
     }
 
     @PostMapping("/add")
-    public String addUsers(@RequestParam("firstname") String firstName,
-                           @RequestParam("lastname") String lastName,
-                           @RequestParam("email") String email,
-                           @RequestParam("age") Byte age,
-                           @RequestParam("password") String password){
-        userService.saveUser(firstName, lastName, email, age,password);
+    public String addUsers(@ModelAttribute("user") User user,
+                           @RequestParam(value = "roleIds", required = false) List<Long> roleIds){
+        userService.saveUser(user, roleIds);
 
         return "redirect:/admin";
     }
@@ -53,14 +54,11 @@ public class AdminController {
     }
 
     @PostMapping("/update")
-    public String updateUsers(@RequestParam("id") Long id,
-                              @RequestParam("firstname") String firstName,
-                              @RequestParam("lastname") String lastName,
-                              @RequestParam("email") String email,
-                              @RequestParam("age") Byte age,
-                              @RequestParam("password") String password) {
+    public String updateUsers(@ModelAttribute("user") User user,
+                              @RequestParam(value = "roleIds", required = false)
+                              List<Long> roleIds){
 
-        userService.updateUser(id, firstName, lastName, email, age,password);
+        userService.updateUser(user, roleIds);
 
         return "redirect:/admin";
     }
