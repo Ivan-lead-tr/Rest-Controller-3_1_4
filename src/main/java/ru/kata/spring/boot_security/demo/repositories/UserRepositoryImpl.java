@@ -4,7 +4,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
-import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 
 
@@ -54,11 +53,6 @@ public class UserRepositoryImpl implements UserRepository {
         } catch (NoResultException e) {
             return null;
         }
-    }
-
-    @Override
-    public Role findById(Long id) {
-        return entityManager.find(Role.class, id);
     }
 
     @Override

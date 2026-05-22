@@ -6,6 +6,7 @@ import org.mockito.Mockito;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
+import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
 import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
@@ -24,13 +25,15 @@ public class UserServiceImplTest {
     private UserRepository userRepository;
     private BCryptPasswordEncoder passwordEncoder;
     private UserServiceImpl userService;
+    private RoleRepository roleRepository;
 
     @BeforeEach
     void setUp() {
         // Создаем чистые заглушки (моки) без поднятия Spring
         userRepository = Mockito.mock(UserRepository.class);
+        roleRepository = Mockito.mock(RoleRepository.class);
         passwordEncoder = Mockito.mock(BCryptPasswordEncoder.class);
-        userService = new UserServiceImpl(userRepository, passwordEncoder);
+        userService = new UserServiceImpl(userRepository,roleRepository, passwordEncoder);
     }
 
     // 1. saveUser — проверяет что пароль зашифрован и юзер сохранён
@@ -43,7 +46,7 @@ public class UserServiceImplTest {
         Role mockRole = new Role(1L, "ROLE_USER");
 
         when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPasswordHash");
-        when(userRepository.findById(1L)).thenReturn(mockRole);
+        when(roleRepository.findById(1L)).thenReturn(mockRole);
 
         // When
         userService.saveUser(user, roleIds);

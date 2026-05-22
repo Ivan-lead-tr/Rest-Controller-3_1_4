@@ -1,6 +1,5 @@
 package ru.kata.spring.boot_security.demo.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
+import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
 
 
@@ -20,11 +20,15 @@ import java.util.Set;
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder){
-        this.userRepository=userRepository;
+
+    public UserServiceImpl(UserRepository userRepository,
+                           RoleRepository roleRepository,
+                           BCryptPasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -38,7 +42,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             Set<Role> roles = new HashSet<>();
 
             for (Long roleId : roleIds) {
-                Role role = userRepository.findById(roleId);
+                Role role = roleRepository.findById(roleId);
                 if (role != null) {
                     roles.add(role);
                 }
@@ -74,7 +78,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             Set<Role> roles = new HashSet<>();
 
             for (Long roleId : roleIds) {
-                Role role = userRepository.findById(roleId);
+                Role role = roleRepository.findById(roleId);
                 if (role != null) {
                     roles.add(role);
                 }
@@ -96,12 +100,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public User userByEmail(String email) {
        return userRepository.userByEmail(email);
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Role findById(Long id) {
-        return userRepository.findById(id);
     }
 
     @Override
