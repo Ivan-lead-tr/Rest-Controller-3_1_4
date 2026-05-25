@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
 
 
@@ -20,37 +19,27 @@ import java.util.Set;
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private final BCryptPasswordEncoder passwordEncoder;
 
 
     public UserServiceImpl(UserRepository userRepository,
-                           RoleRepository roleRepository,
+                           RoleService roleService,
                            BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+        this.roleService = roleService;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
     @Override
-    public void saveUser (User user, List<Long> roleIds) {
+    public void saveUser(User user, Set<Long> roleIds) {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        List<Role> roles = roleService.findRolesByIds(roleIds);
+        user.setRoles(roles);
 
-        if (roleIds != null && !roleIds.isEmpty()) {
-            Set<Role> roles = new HashSet<>();
-
-            for (Long roleId : roleIds) {
-                Role role = roleRepository.findById(roleId);
-                if (role != null) {
-                    roles.add(role);
-                }
-            }
-            user.setRoles(roles); // Перезаписываем на новый набор ролей
-        }
         userRepository.saveUser(user);
-
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +51,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Transactional
     @Override
-    public void updateUser(User user, List<Long> roleIds) {
+    public void updateUser(User user, Set<Long> roleIds) {
 
         User udUser = userRepository.findUserById(user.getId());
 
@@ -74,19 +63,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
             udUser.setPassword(passwordEncoder.encode(user.getPassword()));
         }
-        if (roleIds != null && !roleIds.isEmpty()) {
-            Set<Role> roles = new HashSet<>();
-
-            for (Long roleId : roleIds) {
-                Role role = roleRepository.findById(roleId);
-                if (role != null) {
-                    roles.add(role);
-                }
-            }
-            udUser.setRoles(roles); // Перезаписываем на новый набор ролей
-        }
+        List<Role> roles = roleService.findRolesByIds(roleIds);
+        udUser.setRoles(roles);
 
         userRepository.updateUser(udUser);
+
     }
 
     @Transactional
@@ -99,9 +80,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Transactional(readOnly = true)
     @Override
     public User userByEmail(String email) {
-       return userRepository.userByEmail(email);
+        return userRepository.userByEmail(email);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public User findUserById(Long id) {
         return userRepository.findUserById(id);
@@ -111,7 +93,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.userByEmail(username);
-        if (user == null){
+        if (user == null) {
             throw new UsernameNotFoundException("Пользователь не найден");
         }
         return user;

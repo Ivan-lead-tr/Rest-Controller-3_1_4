@@ -6,13 +6,13 @@ import org.mockito.Mockito;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
+import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,15 +25,15 @@ public class UserServiceImplTest {
     private UserRepository userRepository;
     private BCryptPasswordEncoder passwordEncoder;
     private UserServiceImpl userService;
-    private RoleRepository roleRepository;
+    private RoleService roleService;
 
     @BeforeEach
     void setUp() {
         // Создаем чистые заглушки (моки) без поднятия Spring
         userRepository = Mockito.mock(UserRepository.class);
-        roleRepository = Mockito.mock(RoleRepository.class);
+        roleService = Mockito.mock(RoleService.class);
         passwordEncoder = Mockito.mock(BCryptPasswordEncoder.class);
-        userService = new UserServiceImpl(userRepository,roleRepository, passwordEncoder);
+        userService = new UserServiceImpl(userRepository,roleService, passwordEncoder);
     }
 
     // 1. saveUser — проверяет что пароль зашифрован и юзер сохранён
@@ -42,11 +42,11 @@ public class UserServiceImplTest {
         // Given
         User user = new User("Иван", "Иванов", "ivan@mail.ru", (byte) 25);
         user.setPassword("rawPassword");
-        List<Long> roleIds = Collections.singletonList(1L);
+        Set<Long> roleIds = Set.of(1L);
         Role mockRole = new Role(1L, "ROLE_USER");
 
         when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPasswordHash");
-        when(roleRepository.findById(1L)).thenReturn(mockRole);
+        when(roleService.findById(1L)).thenReturn(mockRole);
 
         // When
         userService.saveUser(user, roleIds);
