@@ -92,7 +92,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Transactional(readOnly = true)
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        //User user = userRepository.userByEmail(username);
+        System.out.println("=== Аутентификация ===");
+        System.out.println("loadUserByUsername вызван с параметром: " + username);
         User user = userRepository.userByEmail(username);
+        System.out.println("Найден пользователь: " + (user != null ? user.getEmail() : "null"));
         if (user == null) {
             throw new UsernameNotFoundException("Пользователь не найден");
         }
