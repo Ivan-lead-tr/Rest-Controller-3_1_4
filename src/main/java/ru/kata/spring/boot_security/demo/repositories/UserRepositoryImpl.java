@@ -8,6 +8,7 @@ import ru.kata.spring.boot_security.demo.model.User;
 
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class UserRepositoryImpl implements UserRepository {
@@ -35,28 +36,21 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void deleteUser(Long id) {
-
-        User user = entityManager.find(User.class, id);
-        if (user != null) {
-            entityManager.remove(user);
-        }
+        entityManager.remove(id);
     }
 
     @Override
-    public User userByEmail(String email) {
-        try {
-            return entityManager.createQuery(
-                            "select u from User u join fetch u.roles where u.email = :email",
-                            User.class)
-                    .setParameter("email", email)
-                    .getSingleResult();
-        } catch (NoResultException e) {
-            return null;
-        }
+    public Optional<User> userByEmail(String email) {
+        return entityManager.createQuery(
+                        "select u from User u join fetch u.roles where u.email = :email",
+                        User.class)
+                .setParameter("email", email)
+                .getResultStream()
+                .findFirst();
     }
 
     @Override
-    public User findUserById(Long id) {
-        return entityManager.find(User.class, id);
+    public Optional<User> findUserById(Long id) {
+        return Optional.ofNullable(entityManager.find(User.class, id));
     }
 }

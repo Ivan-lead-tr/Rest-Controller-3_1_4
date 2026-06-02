@@ -1,5 +1,6 @@
 package ru.kata.spring.boot_security.demo.controllers;
 
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
@@ -28,40 +30,42 @@ public class AdminController {
 
 
     @GetMapping
-    public String getAllUsers(Principal principal,Model model) {
-        String userName = principal.getName();
-        User user = userService.userByEmail(userName);
-        model.addAttribute("user", user);
-        model.addAttribute("users", userService.getAllUsers());
+    public ModelAndView getAllUsers(Principal principal) {
+        ModelAndView mav = new ModelAndView("users");
 
-        return "users";
+        User user = userService.userByEmail(principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
+        mav.addObject("user", user);
+        mav.addObject("users", userService.getAllUsers());
+
+        return mav;
     }
 
     @PostMapping("/add")
-    public String addUsers(@ModelAttribute("user") User user,
+    public ModelAndView addUsers(@ModelAttribute("user") User user,
                            @RequestParam(value = "roleIds", required = false) Set<Long> roleIds){
         userService.saveUser(user, roleIds);
 
-        return "redirect:/admin";
+        return new ModelAndView("redirect:/admin");
     }
 
     @PostMapping("/delete")
-    public String deleteUsers(@RequestParam("id") Long id){
+    public ModelAndView deleteUsers(@RequestParam("id") Long id){
 
         userService.deleteUser(id);
 
-        return "redirect:/admin";
+        return new ModelAndView("redirect:/admin");
 
     }
 
     @PostMapping("/update")
-    public String updateUsers(@ModelAttribute("user") User user,
+    public ModelAndView updateUsers(@ModelAttribute("user") User user,
                               @RequestParam(value = "roleIds", required = false)
                               Set<Long> roleIds){
 
         userService.updateUser(user, roleIds);
 
-        return "redirect:/admin";
+        return new ModelAndView("redirect:/admin");
     }
 }

@@ -12,6 +12,7 @@ import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -92,7 +93,7 @@ public class UserServiceImplTest {
         User dbUser = new User("СтароеИмя", "СтараяФамилия", "old@mail.ru", (byte) 25);
         dbUser.setPassword("oldSecretHash");
 
-        when(userRepository.findUserById(1L)).thenReturn(dbUser);
+        when(userRepository.findUserById(1L)).thenReturn(Optional.of(dbUser));
         when(passwordEncoder.encode("newRawPassword")).thenReturn("newEncodedHash");
 
         // When
@@ -113,11 +114,17 @@ public class UserServiceImplTest {
     void testDeleteUser_ShouldCallRepositoryWithCorrectId() {
         // Given
         Long userIdToDelete = 5L;
+        User userToDelete = new User("Иван", "Иванов", "ivan@mail.ru", (byte) 25);
+        userToDelete.setId(userIdToDelete);
+
+        // Настраиваем мок: при поиске пользователя с id=5L возвращаем Optional с пользователем
+        when(userRepository.findUserById(userIdToDelete)).thenReturn(Optional.of(userToDelete));
 
         // When
         userService.deleteUser(userIdToDelete);
 
         // Then
-        verify(userRepository, times(1)).deleteUser(userIdToDelete); // Проверяем вызов репозитория с нужным ID
+        verify(userRepository, times(1)).findUserById(userIdToDelete);
+        verify(userRepository, times(1)).deleteUser(userIdToDelete);
     }
 }

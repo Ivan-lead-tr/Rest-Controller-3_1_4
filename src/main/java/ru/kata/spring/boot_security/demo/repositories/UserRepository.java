@@ -3,6 +3,7 @@ package ru.kata.spring.boot_security.demo.repositories;
 import ru.kata.spring.boot_security.demo.model.User;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository {
 
@@ -14,7 +15,7 @@ public interface UserRepository {
 
     void deleteUser(Long id);
 
-    User userByEmail(String email);
+    Optional<User> userByEmail(String email);
 
-    User findUserById(Long id);
+    Optional<User> findUserById(Long id);
 }
