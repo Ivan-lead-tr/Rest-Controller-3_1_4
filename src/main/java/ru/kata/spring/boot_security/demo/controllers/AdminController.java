@@ -20,52 +20,10 @@ import java.util.Set;
 @RequestMapping("/admin")
 public class AdminController {
 
-    private final UserService userService;
-
-
-    public AdminController(UserService userService) {
-        this.userService = userService;
-
-    }
-
-
     @GetMapping
-    public ModelAndView getAllUsers(Principal principal) {
-        ModelAndView mav = new ModelAndView("users");
+    public String adminPage() {
 
-        User user = userService.userByEmail(principal.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
-
-        mav.addObject("user", user);
-        mav.addObject("users", userService.getAllUsers());
-
-        return mav;
-    }
-
-    @PostMapping("/add")
-    public ModelAndView addUsers(@ModelAttribute("user") User user,
-                           @RequestParam(value = "roleIds", required = false) Set<Long> roleIds){
-        userService.saveUser(user, roleIds);
-
-        return new ModelAndView("redirect:/admin");
-    }
-
-    @PostMapping("/delete")
-    public ModelAndView deleteUsers(@RequestParam("id") Long id){
-
-        userService.deleteUser(id);
-
-        return new ModelAndView("redirect:/admin");
-
-    }
-
-    @PostMapping("/update")
-    public ModelAndView updateUsers(@ModelAttribute("user") User user,
-                              @RequestParam(value = "roleIds", required = false)
-                              Set<Long> roleIds){
-
-        userService.updateUser(user, roleIds);
-
-        return new ModelAndView("redirect:/admin");
+        return "users";
+        
     }
 }

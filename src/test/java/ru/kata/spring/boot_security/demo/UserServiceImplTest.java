@@ -47,7 +47,7 @@ public class UserServiceImplTest {
         Role mockRole = new Role(1L, "ROLE_USER");
 
         when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPasswordHash");
-        when(roleService.findById(1L)).thenReturn(mockRole);
+        when(roleService.findAllByRoleIdIn(roleIds)).thenReturn(List.of(mockRole));;
 
         // When
         userService.saveUser(user, roleIds);
@@ -55,7 +55,7 @@ public class UserServiceImplTest {
         // Then
         assertEquals("encodedPasswordHash", user.getPassword(), "Пароль должен быть зашифрован");
         assertNotNull(user.getRoles(), "Роли должны быть установлены");
-        verify(userRepository, times(1)).saveUser(user); // Проверяем, что юзер сохранен в репозиторий
+        verify(userRepository, times(1)).save(user); // Проверяем, что юзер сохранен в репозиторий
     }
 
     // 2. getAllUsers — проверяет что возвращается список из репозитория
@@ -66,7 +66,7 @@ public class UserServiceImplTest {
                 new User("Иван", "Иванов", "ivan@mail.ru", (byte) 25),
                 new User("Пётр", "Петров", "petr@mail.ru", (byte) 30)
         );
-        when(userRepository.getAllUsers()).thenReturn(mockUsers);
+        when(userRepository.findAllWithRoles()).thenReturn(mockUsers);
 
         // When
         List<User> result = userService.getAllUsers();
@@ -75,7 +75,7 @@ public class UserServiceImplTest {
         assertNotNull(result, "Список не должен быть null");
         assertEquals(2, result.size(), "Должно вернуться 2 пользователя");
         assertEquals("Иван", result.get(0).getFirstName());
-        verify(userRepository, times(1)).getAllUsers(); // Проверяем, что вызван именно репозиторий
+        verify(userRepository, times(1)).findAllWithRoles(); // Проверяем, что вызван именно репозиторий
     }
 
     // 3. updateUser — проверяет что поля обновились, пароль перешифровался, вызван updateUser
@@ -91,13 +91,18 @@ public class UserServiceImplTest {
         formUser.setPassword("newRawPassword"); // Новый пароль для перешифрования
 
         User dbUser = new User("СтароеИмя", "СтараяФамилия", "old@mail.ru", (byte) 25);
+        dbUser.setId(1L);
         dbUser.setPassword("oldSecretHash");
 
-        when(userRepository.findUserById(1L)).thenReturn(Optional.of(dbUser));
+        Set<Long> roleIds = Set.of(1L);
+        Role mockRole = new Role(1L, "ROLE_USER");
+
+        when(userRepository.findByIdWithRoles(1L)).thenReturn(Optional.of(dbUser));
         when(passwordEncoder.encode("newRawPassword")).thenReturn("newEncodedHash");
+        when(roleService.findAllByRoleIdIn(roleIds)).thenReturn(List.of(mockRole));
 
         // When
-        userService.updateUser(formUser, null);
+        userService.updateUser(formUser, roleIds);
 
         // Then
         assertEquals("НовоеИмя", dbUser.getFirstName(), "Имя должно обновиться");
@@ -106,7 +111,7 @@ public class UserServiceImplTest {
         assertEquals((byte) 26, dbUser.getAge(), "Возраст должен обновиться");
         assertEquals("newEncodedHash", dbUser.getPassword(), "Пароль должен перешифроваться");
 
-        verify(userRepository, times(1)).updateUser(dbUser); // Проверяем, что вызван updateUser репозитория
+        verify(userRepository, times(1)).save(dbUser); // Проверяем, что вызван updateUser репозитория
     }
 
     // 4. deleteUser — проверяет что вызван deleteUser с нужным id
@@ -118,13 +123,13 @@ public class UserServiceImplTest {
         userToDelete.setId(userIdToDelete);
 
         // Настраиваем мок: при поиске пользователя с id=5L возвращаем Optional с пользователем
-        when(userRepository.findUserById(userIdToDelete)).thenReturn(Optional.of(userToDelete));
+        when(userRepository.findById(userIdToDelete)).thenReturn(Optional.of(userToDelete));
 
         // When
         userService.deleteUser(userIdToDelete);
 
         // Then
-        verify(userRepository, times(1)).findUserById(userIdToDelete);
-        verify(userRepository, times(1)).deleteUser(userIdToDelete);
+        verify(userRepository, times(1)).findById(userIdToDelete);
+        verify(userRepository, times(1)).deleteById(userIdToDelete);
     }
 }

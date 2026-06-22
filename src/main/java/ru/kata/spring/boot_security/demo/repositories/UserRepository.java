@@ -1,21 +1,20 @@
 package ru.kata.spring.boot_security.demo.repositories;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import ru.kata.spring.boot_security.demo.model.User;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface UserRepository {
+public interface UserRepository extends JpaRepository<User, Long> {
 
-    void saveUser(User user);
+    @Query("select u from User u join fetch u.roles where u.email = :email")
+    Optional<User> findByEmail(String email);
 
-    List<User> getAllUsers();
+    @Query("select u from User u join fetch u.roles where u.id = :id")
+    Optional<User> findByIdWithRoles(Long id);
 
-    void updateUser(User user);
-
-    void deleteUser(Long id);
-
-    Optional<User> userByEmail(String email);
-
-    Optional<User> findUserById(Long id);
+    @Query("select distinct u from User u join fetch u.roles")
+    List<User> findAllWithRoles();
 }

@@ -22,7 +22,9 @@
 <body>
 <nav class="navbar bg-dark" data-bs-theme="dark">
     <div class="container-fluid">
-        <span class="text-white" th:text="${user.email} + ' Пользователь с ролью: ' + ${user.roles[0].name}"></span>
+        <span class="text-white">
+    <span sec:authentication="name"></span> Пользователь с ролью: Администратор
+</span>
         <form th:action="@{/logout}" method="post">
             <button type="submit" class="btn btn-dark text-secondary">Выйти</button>
         </form>
@@ -71,47 +73,7 @@
                                         <th>Удалить</th>
                                     </tr>
                                     </thead>
-                                    <tbody>
-                                    <tr th:each="user : ${users}">
-                                        <td th:text="${user.id}"></td>
-                                        <td th:text="${user.firstName}"></td>
-                                        <td th:text="${user.lastName}"></td>
-                                        <td th:text="${user.email}"></td>
-                                        <td th:text="${user.age}"></td>
-                                        <td>
-                                            <span th:each="role : ${user.roles}" th:text="${role.name} + ' '"></span>
-                                        </td>
-                                        <td>
-                                            <button type="button"
-                                                    class="btn btn-info btn-sm"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#editModal"
-                                                    th:attr="
-                                            data-id=${user.id},
-                                            data-firstname=${user.firstName},
-                                            data-lastname=${user.lastName},
-                                            data-email=${user.email},
-                                            data-age=${user.age},
-                                            data-roles=${#strings.arrayJoin(user.roles.![id], ',')}" >
-                                                Редактировать
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <button type="button"
-                                                    class="btn btn-danger btn-sm"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#deleteModal"
-                                                    th:attr="
-                                                        data-id=${user.id},
-                                                        data-firstname=${user.firstName},
-                                                        data-lastname=${user.lastName},
-                                                        data-email=${user.email},
-                                                        data-age=${user.age},
-                                                        data-roles=${#strings.arrayJoin(user.roles.![id], ',')}">
-                                                Удалить
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <tbody id="users-table-body">
                                     </tbody>
                                 </table>
                             </div>
@@ -124,7 +86,7 @@
                             <div class="card-header">
                                 <h6>Добавить пользователя</h6>
                             </div>
-                            <form th:action="@{/admin/add}" method="post">
+                            <form id="add-user-form">
                                 <div class="mb-3 w-25 mx-auto p-2">
                                     <div class="mb-3">
                                         <label for="firstName"
@@ -155,8 +117,6 @@
                                         <label for="roles" class="form-label fw-bold d-block text-center">Роль</label>
                                         <select class="form-select text-center role-select" id="roles" name="roleIds"
                                                 size="2" multiple required>
-                                            <option value="1">ADMIN</option>
-                                            <option value="2">USER</option>
                                         </select>
                                     </div>
                                     <div class="text-center">
@@ -181,7 +141,7 @@
                 <h5 class="modal-title" id="editModalLabel">Edit user</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form th:action="@{/admin/update}" method="post">
+            <form id="edit-user-form">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold">ID</label>
@@ -212,8 +172,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Роль</label>
                         <select id="edit-roles" name="roleIds" class="form-select" size="2" multiple required>
-                            <option value="1">ADMIN</option>
-                            <option value="2">USER</option>
                         </select>
                     </div>
                 </div>
@@ -234,7 +192,7 @@
                 <h5 class="modal-title" id="deleteModalLabel">Delete user</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form th:action="@{/admin/delete}" method="post">
+            <form id="delete-user-form">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold">ID</label>
@@ -260,8 +218,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Роль</label>
                         <select id="delete-roles" class="form-select" size="2" multiple disabled>
-                            <option value="1">ADMIN</option>
-                            <option value="2">USER</option>
                         </select>
                     </div>
                 </div>
@@ -281,38 +237,10 @@
             this.classList.add('active');
         });
     });
-    // Fill Edit modal
-    document.getElementById('editModal').addEventListener('show.bs.modal', function (event) {
-        const btn = event.relatedTarget;
-        document.getElementById('edit-id').value       = btn.dataset.id;
-        document.getElementById('edit-id-hidden').value = btn.dataset.id;
-        document.getElementById('edit-firstName').value = btn.dataset.firstname;
-        document.getElementById('edit-lastName').value  = btn.dataset.lastname;
-        document.getElementById('edit-email').value     = btn.dataset.email;
-        document.getElementById('edit-age').value       = btn.dataset.age;
-        document.getElementById('edit-password').value  = '';
-
-        const roleIds = btn.dataset.roles ? btn.dataset.roles.split(',') : [];
-        document.querySelectorAll('#edit-roles option').forEach(opt => {
-            opt.selected = roleIds.includes(opt.value);
-        });
-    });
-
-    // Fill Delete modal
-    document.getElementById('deleteModal').addEventListener('show.bs.modal', function (event) {
-        const btn = event.relatedTarget;
-        document.getElementById('delete-id').value        = btn.dataset.id;
-        document.getElementById('delete-id-hidden').value = btn.dataset.id;
-        document.getElementById('delete-firstName').value = btn.dataset.firstname;
-        document.getElementById('delete-lastName').value  = btn.dataset.lastname;
-        document.getElementById('delete-email').value     = btn.dataset.email;
-        document.getElementById('delete-age').value       = btn.dataset.age;
-
-        const roleIds = btn.dataset.roles ? btn.dataset.roles.split(',') : [];
-        document.querySelectorAll('#delete-roles option').forEach(opt => {
-            opt.selected = roleIds.includes(opt.value);
-        });
-    });
 </script>
+<script src="/api.js"></script>
+<script src="/render.js"></script>
+<script src="/app.js"></script>
+
 </body>
 </html>
