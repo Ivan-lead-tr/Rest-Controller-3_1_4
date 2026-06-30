@@ -17,7 +17,6 @@ public class UserMapper {
 
     private final RoleMapper roleMapper;
 
-//Отдаем клиенту
     public UserDto toDto(User user) {
 
         if (user == null) {
@@ -33,7 +32,6 @@ public class UserMapper {
 
         return dto;
     }
-//Создаем юзера
     public User toEntity(UserDto userDto) {
 
         if (userDto ==null)  {
@@ -53,7 +51,6 @@ public class UserMapper {
         return user;
     }
 
-    //Отдаем всех юзеров
     public List<UserDto> toDtoList(List<User> users) {
 
         if (users == null) {

@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select distinct u from User u join fetch u.roles")
     List<User> findAllWithRoles();
+
+    Long id(Long id);
 }

@@ -4,6 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import ru.kata.spring.boot_security.demo.dtos.RoleDto;
+import ru.kata.spring.boot_security.demo.dtos.UserDto;
+import ru.kata.spring.boot_security.demo.mappers.UserMapper;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
@@ -17,6 +20,9 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,35 +33,50 @@ public class UserServiceImplTest {
     private BCryptPasswordEncoder passwordEncoder;
     private UserServiceImpl userService;
     private RoleService roleService;
+    private UserMapper userMapper;
 
     @BeforeEach
     void setUp() {
         // Создаем чистые заглушки (моки) без поднятия Spring
         userRepository = Mockito.mock(UserRepository.class);
         roleService = Mockito.mock(RoleService.class);
+        userMapper = Mockito.mock(UserMapper.class);
         passwordEncoder = Mockito.mock(BCryptPasswordEncoder.class);
-        userService = new UserServiceImpl(userRepository,roleService, passwordEncoder);
+        userService = new UserServiceImpl(userRepository, roleService, userMapper, passwordEncoder);
     }
 
     // 1. saveUser — проверяет что пароль зашифрован и юзер сохранён
     @Test
     void testSaveUser_ShouldEncodePasswordAndSaveUser() {
         // Given
-        User user = new User("Иван", "Иванов", "ivan@mail.ru", (byte) 25);
-        user.setPassword("rawPassword");
+        UserDto userDto = new UserDto();
+        userDto.setFirstName("Иван");
+        userDto.setLastName("Иванов");
+        userDto.setEmail("ivan@mail.ru");
+        userDto.setAge((byte) 25);
+        userDto.setPassword("rawPassword");
+
+        RoleDto roleDto = new RoleDto();
+        roleDto.setId(1L);
+        userDto.setRoles(Set.of(roleDto));
+
         Set<Long> roleIds = Set.of(1L);
         Role mockRole = new Role(1L, "ROLE_USER");
 
+        User mappedUser = new User("Иван", "Иванов", "ivan@mail.ru", (byte) 25);
+        mappedUser.setPassword("rawPassword");
+
+        when(userMapper.toEntity(userDto)).thenReturn(mappedUser);
         when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPasswordHash");
         when(roleService.findAllByRoleIdIn(roleIds)).thenReturn(List.of(mockRole));;
 
         // When
-        userService.saveUser(user, roleIds);
+        userService.saveUser(userDto);
 
         // Then
-        assertEquals("encodedPasswordHash", user.getPassword(), "Пароль должен быть зашифрован");
-        assertNotNull(user.getRoles(), "Роли должны быть установлены");
-        verify(userRepository, times(1)).save(user); // Проверяем, что юзер сохранен в репозиторий
+        assertEquals("encodedPasswordHash", mappedUser.getPassword(), "Пароль должен быть зашифрован");
+        assertNotNull(mappedUser.getRoles(), "Роли должны быть установлены");
+        verify(userRepository, times(1)).save(mappedUser); // Проверяем, что юзер сохранен в репозиторий
     }
 
     // 2. getAllUsers — проверяет что возвращается список из репозитория
@@ -81,38 +102,53 @@ public class UserServiceImplTest {
     // 3. updateUser — проверяет что поля обновились, пароль перешифровался, вызван updateUser
     @Test
     void testUpdateUser_ShouldUpdateFieldsEncodePasswordAndCallRepository() {
-        // Given
-        User formUser = new User();
-        formUser.setId(1L);
-        formUser.setFirstName("НовоеИмя");
-        formUser.setLastName("НоваяФамилия");
-        formUser.setEmail("new@mail.ru");
-        formUser.setAge((byte) 26);
-        formUser.setPassword("newRawPassword"); // Новый пароль для перешифрования
+            // Given
+            UserDto userDto = new UserDto();
+            userDto.setFirstName("НовоеИмя");
+            userDto.setLastName("НоваяФамилия");
+            userDto.setEmail("new@mail.ru");
+            userDto.setAge((byte) 26);
+            userDto.setPassword("newRawPassword");
 
-        User dbUser = new User("СтароеИмя", "СтараяФамилия", "old@mail.ru", (byte) 25);
-        dbUser.setId(1L);
-        dbUser.setPassword("oldSecretHash");
+            RoleDto roleDto = new RoleDto();
+            roleDto.setId(1L);
+            userDto.setRoles(Set.of(roleDto));
 
-        Set<Long> roleIds = Set.of(1L);
-        Role mockRole = new Role(1L, "ROLE_USER");
+            User dbUser = new User("СтароеИмя", "СтараяФамилия", "old@mail.ru", (byte) 25);
+            dbUser.setId(1L);
+            dbUser.setPassword("oldSecretHash");
 
-        when(userRepository.findByIdWithRoles(1L)).thenReturn(Optional.of(dbUser));
-        when(passwordEncoder.encode("newRawPassword")).thenReturn("newEncodedHash");
-        when(roleService.findAllByRoleIdIn(roleIds)).thenReturn(List.of(mockRole));
+            Set<Long> roleIds = Set.of(1L);
+            Role mockRole = new Role(1L, "ROLE_USER");
 
-        // When
-        userService.updateUser(formUser, roleIds);
+            when(userRepository.findByIdWithRoles(1L)).thenReturn(Optional.of(dbUser));
+            when(roleService.findAllByRoleIdIn(roleIds)).thenReturn(List.of(mockRole));
+            when(passwordEncoder.encode("newRawPassword")).thenReturn("newEncodedHash");
 
-        // Then
-        assertEquals("НовоеИмя", dbUser.getFirstName(), "Имя должно обновиться");
-        assertEquals("НоваяФамилия", dbUser.getLastName(), "Фамилия должна обновиться");
-        assertEquals("new@mail.ru", dbUser.getEmail(), "Email должен обновиться");
-        assertEquals((byte) 26, dbUser.getAge(), "Возраст должен обновиться");
-        assertEquals("newEncodedHash", dbUser.getPassword(), "Пароль должен перешифроваться");
+            doAnswer(invocation -> {
+                UserDto dto = invocation.getArgument(0);
+                User entity = invocation.getArgument(1);
+                entity.setFirstName(dto.getFirstName());
+                entity.setLastName(dto.getLastName());
+                entity.setEmail(dto.getEmail());
+                entity.setAge(dto.getAge());
+                return null;
+            }).when(userMapper).updateEntityFromDto(eq(userDto), eq(dbUser), any());
 
-        verify(userRepository, times(1)).save(dbUser); // Проверяем, что вызван updateUser репозитория
-    }
+            when(userRepository.save(dbUser)).thenReturn(dbUser);
+
+            // When
+            userService.updateUser(1L, userDto);
+
+            // Then
+            assertEquals("НовоеИмя", dbUser.getFirstName(), "Имя должно обновиться");
+            assertEquals("НоваяФамилия", dbUser.getLastName(), "Фамилия должна обновиться");
+            assertEquals("new@mail.ru", dbUser.getEmail(), "Email должен обновиться");
+            assertEquals((byte) 26, dbUser.getAge(), "Возраст должен обновиться");
+            assertEquals("newEncodedHash", dbUser.getPassword(), "Пароль должен перешифроваться");
+
+            verify(userRepository, times(1)).save(dbUser);
+        }
 
     // 4. deleteUser — проверяет что вызван deleteUser с нужным id
     @Test
